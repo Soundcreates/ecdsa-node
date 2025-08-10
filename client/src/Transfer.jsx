@@ -1,7 +1,8 @@
 import { useState } from "react";
 import server from "./server";
+import secp256k1 from "ethereum-cryptography/secp256k1";
 
-function Transfer({ address, setBalance }) {
+function Transfer({ address, setBalance, privateKey, setPrivateKey }) {
   const [sendAmount, setSendAmount] = useState("");
   const [recipient, setRecipient] = useState("");
 
@@ -10,11 +11,16 @@ function Transfer({ address, setBalance }) {
   async function transfer(evt) {
     evt.preventDefault();
 
+    const message = `${address}:${recipient}:${sendAmount}`;
+
+    const signatureBytes = secp256k1.sign(message, privateKey);
     try {
       const {
         data: { balance },
       } = await server.post(`send`, {
-        sender: address,
+        publicKey: address,
+        signature: signatureBytes,
+        message: message,
         amount: parseInt(sendAmount),
         recipient,
       });
